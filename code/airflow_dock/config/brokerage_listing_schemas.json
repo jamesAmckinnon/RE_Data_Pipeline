@@ -1,0 +1,28 @@
+{
+    "property_listing_schema": [
+      "title",
+      "property_description",
+      "address",
+      "city",
+      "province",
+      "country",
+      "sale_or_lease",
+      "price",
+      "property_type",
+      "size",
+      "broker_information",
+      "status",
+      "latitude",
+      "longitude",
+      "brochure_urls", 
+      "listing_url",
+      "image_url",
+      "listing_date",
+      "last_active_date",
+      "uuid"
+    ],
+
+    "avison_young_additional_keys":      [],
+    "cushman_wakefield_additional_keys": [],
+    "royal_park_additional_keys":        []
+}

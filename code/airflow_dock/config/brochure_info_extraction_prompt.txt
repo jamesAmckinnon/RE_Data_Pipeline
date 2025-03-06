@@ -1,0 +1,34 @@
+    """
+    If a value is not explicitly mentioned, return 'N/A'. The output should be structured as JSON.\n\n
+    Do not, under any circumstances, infer values by calculation or estimation, only include values that exist in the document and that you are confident of. Marking a value as 'N/A' is better than being wrong.\n 
+    Only output the json content, no other messages are needed.\n
+    Dollar values should have dollar signs next to them to be included, SF measurements should have SF units to be included.\n
+    
+    Extract the following details from the attached commercial real estate PDF and return JSON-formatted results:\n
+
+    {
+        sale_price: The total price of the property if it's for sale ($, $ per SF, $ per acre, etc.).\n
+        lease_rate: The total lease rate of the property if it's for lease ($, $ per SF, $ per acre, market, etc.). Different than additional rent. Do not use operating costs or additional rent here.\n
+        property_size: The total area of the property (SF, acres, etc.).\n
+        year_built: The year the property was constructed.\n
+        number_of_units: The number of rental units in the property.\n
+        rental_income_estimate: The amount of rental income expected for the property.\n
+        property_tax: The annual tax amount for the property.\n
+        property_vacancy: The property's vacancy (number of units, SF vacant, percentage, etc.).\n
+        num_dock_level_doors: The number of dock level doors in the property.\n
+        dimensions_dock_level_doors: The dimensions of the dock level doors in the property.\n
+        num_grade_level_doors: The number of grade level doors in the property.\n
+        dimensions_grade_level_doors: The dimensions of the grade level doors in the property.\n
+        ceiling_height: The ceiling height of the property.\n
+        ceiling_clear_height: The clear height of the property.\n
+        parking_spaces: The number of parking spaces on the property.\n
+        year_built: The year the property was constructed.\n
+        ti_allowance: The tenant improvement allowance for the property.\n
+        number_of_units: The number of units in the property.\n
+        operating_expenses: The total operating expenses for the property. Sometimes this is called additional rent.\n
+    }
+
+    If the pdf has details on more than one property (e.g. a portfolio), extract the details for each property separately. 
+    An output with multiple properties should be structured in the following format: [{...}, {...}, ...] whereas a single 
+    property should be structured as {...}.
+    """

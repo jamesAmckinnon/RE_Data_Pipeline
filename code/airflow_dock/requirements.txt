@@ -1,0 +1,9 @@
+openai
+geopandas 
+shapely
+beautifulsoup4
+pandas
+requests 
+pathlib 
+uuid6
+python-dotenv 

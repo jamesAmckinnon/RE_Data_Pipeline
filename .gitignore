@@ -1,0 +1,17 @@
+configs/
+data/
+map.html
+configs/.env
+
+.env
+
+code/data_processing/
+code/data_retrieval/
+code/map/
+code/utils/
+code/airflow_dock/data/
+code/airflow_dock/logs/
+code/airflow_dock/plugins/
+code/airflow_dock/venv/
+code/airflow_dock/docker-compose.yaml/
+code/information_extraction/test_pdfs/

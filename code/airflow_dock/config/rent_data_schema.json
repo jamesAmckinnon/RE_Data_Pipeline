@@ -1,0 +1,16 @@
+{
+    "rent_data_schema": [
+        "uuid",
+        "building_name",
+        "building_type",
+        "rental_rate",
+        "address",
+        "city",
+        "province",
+        "latitude",
+        "longitude",
+        "bedrooms",
+        "bathrooms",
+        "size"
+    ]
+}
