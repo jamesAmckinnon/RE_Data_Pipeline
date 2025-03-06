@@ -83,14 +83,6 @@ x-airflow-common:
       condition: service_healthy
 
 services:
-  # airflow:
-  #   image: apache/airflow:2.10.5-python3.12
-  # openai:
-  #     build:
-  #       context: .
-  #       dockerfile: Dockerfile
-  #     environment:
-        # - OPENAI_API_KEY=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
   postgres:
     image: postgres:13
     environment:
