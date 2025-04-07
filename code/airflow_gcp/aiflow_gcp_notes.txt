@@ -1,0 +1,27 @@
+# Once in the VM
+export AIRFLOW_HOME=/home/jamesamckinnon1/air_env 
+cd air_env 
+conda activate air_env
+
+# DAGs folder in VM
+/home/jamesamckinnon1/air_env/dags
+
+# Google Cloud 
+Connection Id: google_cloud_default
+Connection Type: Google Cloud
+Project Id: airflow-ce
+Number of Retries: 5
+
+# Add connection manually
+airflow connections add 'supabase_db_TP_IPv4' --conn-type 'postgres' --conn-login 'postgres.vdrsnwmgmdurrxsfxqpz' --conn-password '$Lw-NXz.gc6rqfp' --conn-host 'aws-0-ca-central-1.pooler.supabase.com' --conn-port '6543' --conn-schema 'postgres' 
+
+# Installing a library when using the systemctl approach
+ssh
+activate conda env
+pip install library
+sudo systemctl restart airflow-webserver
+sudo systemctl restart airflow-scheduler
+
+# Can check status after restarting
+sudo systemctl status airflow-webserver
+sudo systemctl status airflow-scheduler

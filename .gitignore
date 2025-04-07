@@ -15,3 +15,5 @@ code/airflow_dock/plugins/
 code/airflow_dock/venv/
 code/airflow_dock/docker-compose.yaml/
 code/information_extraction/test_pdfs/
+code/information_extraction/financial_statements copy.ipynb
+code/information_extraction/financial_statements.ipynb
