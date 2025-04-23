@@ -167,7 +167,7 @@ def get_liv_data(gcs_bucket, gcs_path):
     
     # Extract the listings data
     try:
-        listings = response.json()["data"]["listSearch"]["buildings"]["feed"][0:5]
+        listings = response.json()["data"]["listSearch"]["buildings"]["feed"]
     except (KeyError, IndexError) as e:
         raise Exception(f"Error parsing API response: {e}. Response: {response.text[:200]}")
     
