@@ -15,9 +15,17 @@ The completed system is up and running on Google Cloud Platform and will continu
 - SQLAlchemy
 
 
-
-
 ### ⚛︎ Airflow DAGs
-
-
 ![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Airflow_Get_Listings.png)
+
+
+#### Property Listings DAG
+![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Get_Listings_DAG.png)
+
+
+#### Rental Rates DAG
+![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Rental_Rates_DAG.png)
+
+
+#### Financial Report Processing DAG
+![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Get_REIT_Report_Data.png)
