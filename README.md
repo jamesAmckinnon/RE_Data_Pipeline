@@ -24,7 +24,7 @@ Extracts and processes property listings from commercial brokerage websites. The
 For each property, additional information is added before a record is created in the datatbase. This includes:
 - Information from the property's brochure
 - Zoning information based on the property's coordinates
-- The businesses and amenities within a radius of the property
+- The businesses and amenities within a radius around the property
 
 ![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Get_Listings_DAG.png)
 
