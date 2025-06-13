@@ -38,6 +38,8 @@ For aggregated rates, a spatial grid is generated over a pre-defined area, such 
 
 
 ### Financial Report Processing DAG
-Extracts financial metrics from REIT financial report PDFs. Each PDF is downloaded and parsed page-by-page to identify which pages contain key financial terms. The relevant pages for each metric are combined into a separate PDF. For each of these metric-specific PDFs, a custom prompt related to the associated metric is generated and submitted to an OpenAI assistant.
+Extracts financial metrics from REIT financial report PDFs. 
+
+Each PDF is downloaded and parsed page-by-page to identify which pages contain specific financial metrics. The relevant pages for each metric are combined into a separate PDF. For each of these metric-specific PDFs, a custom prompt related to the metric is generated and this prompt, along with the PDF, is submitted to an OpenAI assistant which extracts the metric.
 
 ![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Financial_Reports_DAG.png)
