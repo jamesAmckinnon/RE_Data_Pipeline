@@ -14,7 +14,7 @@ The completed system is up and running on Google Cloud Platform and will continu
 - Supabase Database
 - SQLAlchemy
 
-###  Airflow DAGs
+### ⚛︎ Airflow DAGs
 
 
 ![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Airflow_Get_Listings.png)
