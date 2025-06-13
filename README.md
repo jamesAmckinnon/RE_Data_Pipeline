@@ -1,5 +1,5 @@
 # Real Estate Market Analysis Data Pipeline
-The focus of this project was to build a sophisticated data engineering pipeline that automates the process of extracting, transforming and storing real estate related data that will be used in a web application to support real estate investment decisions. 
+The focus of this project was to build a sophisticated data engineering pipeline that automates the process of extracting, transforming, enriching and storing real estate related data that will be used in a web application to support real estate investment decisions. 
 
 ## Project Description
 Various tools and technologies were used to create a backend system capable of handling workflows that involve web scraping, information extraction and data enrichment. The result is an extensible and scalable pipeline that utilizes modern cloud and data engineering tools. 
