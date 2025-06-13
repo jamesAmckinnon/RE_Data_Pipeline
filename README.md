@@ -19,7 +19,7 @@ Various tools and technologies were used to create a backend system capable of w
 
 
 ### Property Listings DAG
-Extracts and processes property listings from commercial brokerage websites. The websites are scraped using the publicly exposed API endpoints that populate listing pages.
+Extracts and processes property listings from commercial brokerage websites. The websites are scraped using the publicly exposed API endpoints that populate property listings pages.
 
 For each property, additional information is added before a record is created in the datatbase. This includes:
 - Information from the property's brochure
