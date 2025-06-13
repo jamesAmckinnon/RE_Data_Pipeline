@@ -15,17 +15,24 @@ The completed system is up and running on Google Cloud Platform and will continu
 - SQLAlchemy
 
 
-### ⚛︎ Airflow DAGs
+## ⚛︎ Airflow DAGs
 ![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Airflow_Get_Listings.png)
 
 
-#### Property Listings DAG
+### Property Listings DAG
+Extracts and processes property listings from commercial brokerage websites. The websites are scraped using publicly exposed API endpoints that are used to populate their listings pages.
+
+For each property, additional information is added before a record is created in the datatbase. This includes:
+- Information from the property's brochure
+- Location-specific zoning information
+- The businesses and amenities within a radius
+
 ![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Get_Listings_DAG.png)
 
 
-#### Rental Rates DAG
+### Rental Rates DAG
 ![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Rental_Rates_DAG.png)
 
 
-#### Financial Report Processing DAG
+### Financial Report Processing DAG
 ![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Financial_Reports_DAG.png)
