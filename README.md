@@ -16,7 +16,7 @@ The completed system is up and running on Google Cloud Platform and will continu
 
 
 ## ⚛︎ Airflow DAGs
-    ![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Airflow_Get_Listings.png)
+![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Airflow_Get_Listings.png)
 
 
 ### Property Listings DAG
@@ -31,8 +31,12 @@ For each property, additional information is added before a record is created in
 
 
 ### Rental Rates DAG
+Extracts and processes rental rates from rental listing websites. These rental rates are stored as individual rates as well as aggregated rates. A spatial grid is generated in a pre-defined area, such as a city, and then an average of the rental rates from properties that have coordinates that fall within each grid cell is calcualted.
+
 ![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Rental_Rates_DAG.png)
 
 
 ### Financial Report Processing DAG
+Extracts financial metrics from REIT financial report PDFs. Each PDF is downloaded and parsed page-by-page to identify which pages contain key financial terms. The relevant pages for each metric are combined into a separate PDF. For each of these metric-specific PDFs, a custom prompt related to the associated metric is generated and submitted to an OpenAI assistant.
+
 ![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Financial_Reports_DAG.png)
