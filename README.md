@@ -11,6 +11,7 @@ Various tools and technologies were used to create a backend system capable of w
 - Docker for Local Testing
 - Supabase Database
 - SQLAlchemy
+- Python
 
 
 ## ⚛︎ Airflow DAGs
