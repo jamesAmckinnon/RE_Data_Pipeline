@@ -30,7 +30,9 @@ For each property, additional information is added before a record is created in
 
 
 ### Rental Rates DAG
-Extracts and processes rental rates from rental listing websites. These rental rates are stored as individual rates as well as aggregated rates. For aggregated rates, a spatial grid is generated in a pre-defined area, such as a city, and then an average of the rental rates from properties that have coordinates that fall within each grid cell is calcualted.
+Extracts and processes rental rates from rental listing websites. These rental rates are stored as individual rates as well as aggregated rates. 
+
+For aggregated rates, a spatial grid is generated in a pre-defined area, such as a city, and then an average of the rental rates from properties that have coordinates that fall within each grid cell is calcualted.
 
 ![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Rental_Rates_DAG.png)
 
