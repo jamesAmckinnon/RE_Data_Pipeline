@@ -28,4 +28,4 @@ The completed system is up and running on Google Cloud Platform and will continu
 
 
 #### Financial Report Processing DAG
-![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Get_REIT_Report_Data.png)
+![Airflow Screenshot](https://github.com/jamesAmckinnon/RE_Data_Pipeline/blob/master/images/Financial_Reports_DAG.png)
