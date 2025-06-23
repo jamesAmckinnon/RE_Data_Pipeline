@@ -1,0 +1,16 @@
+google 
+requests 
+pandas
+geopandas
+shapely
+sqlalchemy
+bs4
+openai
+PyMuPDF
+python-dotenv
+sodapy
+tqdm
+selenium
+webdriver-manager
+lxml
+beautifulsoup4

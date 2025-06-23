@@ -1,0 +1,19 @@
+# Starting from scratch
+docker-compose down -v --remove-orphans
+docker system prune -a --volumes -f
+docker build . -f Dockerfile --no-cache --pull --tag airflow-cre-app
+docker-compose up airflow-initv
+docker-compose up -d
+
+# Building the image 
+docker build -t airflow-re-app -f Dockerfile .
+
+
+# Building the image after changing a requirement and then start it
+docker build . --no-cache --pull --tag airflow-cre-app
+# or
+docker build . --no-cache 
+# then
+docker-compose up -d
+
+# Entering the image
