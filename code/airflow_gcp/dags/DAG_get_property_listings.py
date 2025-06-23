@@ -34,6 +34,7 @@ with DAG(
     description='Gets the property listings from brokerage websites',
     start_date=datetime(2025, 4, 4),
     schedule_interval='@weekly',
+    catchup=False
 ) as dag:
     
     # Get property listings from brokerage websites

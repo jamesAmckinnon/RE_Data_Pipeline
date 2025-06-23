@@ -24,7 +24,7 @@ def get_AV_listings(gcs_bucket, gcs_path):
     if response.status_code == 200:
 
         data = response.json()
-        all_properties_objects = data["items"][0:5]
+        all_properties_objects = data["items"]
 
         for i, property in enumerate(all_properties_objects):
             print(f"Processing property listing: {i}/{len(all_properties_objects)}")

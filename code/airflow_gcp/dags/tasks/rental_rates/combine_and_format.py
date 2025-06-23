@@ -88,22 +88,37 @@ def combine_and_format(gcs_bucket, input_path, output_path):
         # Convert the data to a list of RentalRate objects
         db_rental_rates = []
         for rate in all_rental_rates:
-            db_rental_rates.append(
-                RentalRate(
-                    uuid=rate.get('uuid', ''),
-                    building_name=rate.get('building_name', ''),
-                    rental_rate=rate.get('rental_rate', ''),
-                    building_type=rate.get('building_type', ''),
-                    address=rate.get('address', ''),
-                    city=rate.get('city', ''),
-                    province=rate.get('province', ''),
-                    latitude=rate.get('latitude', 0.0),
-                    longitude=rate.get('longitude', 0.0),
-                    bedrooms=rate.get('bedrooms', 0),
-                    bathrooms=rate.get('bathrooms', 0.0),
-                    size=rate.get('size', 'unknown'),
+            exists = session.query(RentalRate).filter_by(
+                building_name=rate.get('building_name', ''),
+                rental_rate=rate.get('rental_rate', ''),
+                building_type=rate.get('building_type', ''),
+                address=rate.get('address', ''),
+                city=rate.get('city', ''),
+                province=rate.get('province', ''),
+                latitude=rate.get('latitude', 0.0),
+                longitude=rate.get('longitude', 0.0),
+                bedrooms=rate.get('bedrooms', 0),
+                bathrooms=rate.get('bathrooms', 0.0),
+                size=rate.get('size', 'unknown'),
+            ).first()
+
+            if not exists:
+                db_rental_rates.append(
+                    RentalRate(
+                        uuid=rate.get('uuid', ''),
+                        building_name=rate.get('building_name', ''),
+                        rental_rate=rate.get('rental_rate', ''),
+                        building_type=rate.get('building_type', ''),
+                        address=rate.get('address', ''),
+                        city=rate.get('city', ''),
+                        province=rate.get('province', ''),
+                        latitude=rate.get('latitude', 0.0),
+                        longitude=rate.get('longitude', 0.0),
+                        bedrooms=rate.get('bedrooms', 0),
+                        bathrooms=rate.get('bathrooms', 0.0),
+                        size=rate.get('size', 'unknown'),
+                    )
                 )
-            )
         
         # Add all rental rates to the database
         session.add_all(db_rental_rates)

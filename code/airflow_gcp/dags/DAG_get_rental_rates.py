@@ -34,6 +34,7 @@ with DAG(
     description='Gets the rental rates from rental listing websites',
     start_date=datetime(2025, 4, 4),
     schedule_interval='@weekly',
+    catchup=False
 ) as dag:
     
     # Get rental rates from rental listing sites

@@ -23,6 +23,7 @@ with DAG(
     description='Gets financial metrics from financial reports',
     start_date=datetime(2025, 4, 7),
     schedule_interval=None,
+    catchup=False
 ) as dag:
     
     # Download and parse the REIT reports

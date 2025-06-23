@@ -9,149 +9,149 @@ def get_liv_data(gcs_bucket, gcs_path):
     url = "https://nemesis-prod.liv.rent/graphql"
     headers = {}
     payload = {
-    "variables": {
-        "input": {
-            "featured": 100,
-            "page": 1,
-            "page_size": 3000,
-            "housing_types": [],
-            "unit_types": [],
-            "bedroom_count": [],
-            "cities": ["Edmonton"],
-            "sort": {
-                "sort_by": "SUGGESTED",
-                "sort_type": "ASC"
-            }
-        }
-    },
-    "query": """
-    fragment mapBuildingListFields on Listing {
-      bathrooms
-      bedrooms
-      gr_min_price
-      gr_max_price
-      gr_unit
-      gr_count
-      allow_applications
-      public_viewing
-      hide_unit_number
-      unit_type_txt_id
-      unit_type_scope_txt_id
-      cover_photo_aws_s3_key
-      listing_id
-      price
-      price_frequency
-      is_hidden
-      state_machine
-      verified_state_machine
-      furnished
-      size
-      unit_files {
-        aws_s3_key
-        position
-        tag
-        __typename
-      }
-      landlords {
-        identity_verified_state
-        __typename
-      }
-      __typename
-    }
-
-    fragment mapListViewFields on FullListing {
-      street_name
-      building_type
-      building_name
-      building_id
-      full_street_name
-      city
-      state
-      zip
-      location {
-        lat
-        lon
-        __typename
-      }
-      bathrooms
-      bedrooms
-      size
-      gr_min_size
-      gr_min_price
-      gr_max_price
-      allow_applications
-      public_viewing
-      gr_unit
-      hide_unit_number
-      unit_type_txt_id
-      unit_type_scope_txt_id
-      cover_photo_aws_s3_key
-      listing_id
-      price
-      price_frequency
-      is_hidden
-      state_machine
-      verified_state_machine
-      furnished
-      unit_files {
-        aws_s3_key
-        position
-        tag
-        __typename
-      }
-      landlords {
-        identity_verified_state
-        __typename
-      }
-      __typename
-    }
-
-    query ($input: ListSearchInput!) {
-      listSearch {
-        buildings(input: $input) {
-          metadata {
-            page
-            page_size
-            total_count
-            listings_count
-            __typename
+      "variables": {
+          "input": {
+              "featured": 100,
+              "page": 1,
+              "page_size": 3000,
+              "housing_types": [],
+              "unit_types": [],
+              "bedroom_count": [],
+              "cities": ["Edmonton"],
+              "sort": {
+                  "sort_by": "SUGGESTED",
+                  "sort_type": "ASC"
+              }
           }
-          feed {
-            building_id
-            street_name
-            building_type
-            full_street_name
-            city
-            state
-            zip
-            building_name
-            location {
-              lat
-              lon
-              __typename
-            }
-            building_files {
-              aws_s3_key
-              tag
-              __typename
-            }
-            listings {
-              ...mapBuildingListFields
-              __typename
-            }
-            listing_count
-            __typename
-          }
+      },
+      "query": """
+      fragment mapBuildingListFields on Listing {
+        bathrooms
+        bedrooms
+        gr_min_price
+        gr_max_price
+        gr_unit
+        gr_count
+        allow_applications
+        public_viewing
+        hide_unit_number
+        unit_type_txt_id
+        unit_type_scope_txt_id
+        cover_photo_aws_s3_key
+        listing_id
+        price
+        price_frequency
+        is_hidden
+        state_machine
+        verified_state_machine
+        furnished
+        size
+        unit_files {
+          aws_s3_key
+          position
+          tag
           __typename
         }
-        featured(input: $input) {
-          ...mapListViewFields
+        landlords {
+          identity_verified_state
           __typename
         }
         __typename
       }
-    }
-    """
+
+      fragment mapListViewFields on FullListing {
+        street_name
+        building_type
+        building_name
+        building_id
+        full_street_name
+        city
+        state
+        zip
+        location {
+          lat
+          lon
+          __typename
+        }
+        bathrooms
+        bedrooms
+        size
+        gr_min_size
+        gr_min_price
+        gr_max_price
+        allow_applications
+        public_viewing
+        gr_unit
+        hide_unit_number
+        unit_type_txt_id
+        unit_type_scope_txt_id
+        cover_photo_aws_s3_key
+        listing_id
+        price
+        price_frequency
+        is_hidden
+        state_machine
+        verified_state_machine
+        furnished
+        unit_files {
+          aws_s3_key
+          position
+          tag
+          __typename
+        }
+        landlords {
+          identity_verified_state
+          __typename
+        }
+        __typename
+      }
+
+      query ($input: ListSearchInput!) {
+        listSearch {
+          buildings(input: $input) {
+            metadata {
+              page
+              page_size
+              total_count
+              listings_count
+              __typename
+            }
+            feed {
+              building_id
+              street_name
+              building_type
+              full_street_name
+              city
+              state
+              zip
+              building_name
+              location {
+                lat
+                lon
+                __typename
+              }
+              building_files {
+                aws_s3_key
+                tag
+                __typename
+              }
+              listings {
+                ...mapBuildingListFields
+                __typename
+              }
+              listing_count
+              __typename
+            }
+            __typename
+          }
+          featured(input: $input) {
+            ...mapListViewFields
+            __typename
+          }
+          __typename
+        }
+      }
+      """
     }
 
     # print current working dir path
