@@ -2,7 +2,7 @@
 docker-compose down -v --remove-orphans
 docker system prune -a --volumes -f
 docker build . -f Dockerfile --no-cache --pull --tag airflow-cre-app
-docker-compose up airflow-initv
+docker-compose up airflow-init
 docker-compose up -d
 
 # Building the image 
@@ -11,9 +11,16 @@ docker build -t airflow-re-app -f Dockerfile .
 
 # Building the image after changing a requirement and then start it
 docker build . --no-cache --pull --tag airflow-cre-app
-# or
-docker build . --no-cache 
+    # or
+    docker build . --no-cache -t airflow-cre-app
 # then
 docker-compose up -d
 
-# Entering the image
+# Add Supabase connection
+airflow connections add 'supabase_db_TP_IPv4' --conn-type 'postgres' --conn-login 'postgres.vdrsnwmgmdurrxsfxqpz' --conn-password '$Lw-NXz.gc6rqfp' --conn-host 'aws-0-ca-central-1.pooler.supabase.com' --conn-port '6543' --conn-schema 'postgres' 
+
+# Entering a container
+docker compose exec airflow-webserver bash
+
+# Free space from build cache
+docker system prune -a --volumes

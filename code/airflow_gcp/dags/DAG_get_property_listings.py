@@ -5,15 +5,16 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
 from airflow.utils.task_group import TaskGroup 
 
-from tasks.listings.get_AV_listings import get_AV_listings
-from tasks.listings.get_omada_listings import get_omada_listings
-from tasks.listings.get_royal_park_listings import get_royal_park_listings
+from tasks.property_listings.get_AV_listings import get_AV_listings
+from tasks.property_listings.get_omada_listings import get_omada_listings
+from tasks.property_listings.get_royal_park_listings import get_royal_park_listings
+from tasks.property_listings.combine_broker_listings import combine_broker_listings
+from tasks.property_listings.archive_delisted_properties import archive_delisted_properties
 
 from tasks.additional_listing_info.get_brochure_info import get_brochure_info
 from tasks.additional_listing_info.get_osm_data import get_osm_data
 from tasks.additional_listing_info.get_zoning_data import get_zoning_data
 
-from tasks.combine_broker_listings import combine_broker_listings
 
 
 gcs_bucket = "cre-property-listings"
@@ -42,6 +43,7 @@ with DAG(
         task_id='get_AV_listings',
         python_callable=get_AV_listings,
         op_kwargs={
+            'city_name': "Edmonton",
             'gcs_bucket': gcs_bucket,
             'gcs_path': f"{gcs_separated_property_listings}/av_listings.json"
         }
@@ -71,16 +73,20 @@ with DAG(
         bash_command='echo All listing tasks complete.',
     )
 
-    # Get additional information for listings
-    brochure_information = PythonOperator(
-        task_id='get_brochure_info',
-        python_callable=get_brochure_info,
-        op_kwargs={
-            'gcs_bucket': gcs_bucket,
-            'input_path': gcs_separated_property_listings,
-            'output_path': f"{gcs_separated_listing_info}/brochure_info.json"
-        }
-    )
+    #########################################
+    ##### Not quite accurate enough yet #####
+    #########################################
+    # # Information extraction for listing brochures
+    # brochure_information = PythonOperator(
+    #     task_id='get_brochure_info',
+    #     python_callable=get_brochure_info,
+    #     op_kwargs={
+    #         'city_name': "Edmonton",
+    #         'gcs_bucket': gcs_bucket,
+    #         'input_path': gcs_separated_property_listings,
+    #         'output_path': f"{gcs_separated_listing_info}/brochure_info.json"
+    #     }
+    # )
 
     osm_data = PythonOperator(
         task_id='get_osm_data',
@@ -110,11 +116,19 @@ with DAG(
         op_kwargs={
             'gcs_bucket': gcs_bucket,
             'properties_input_path': gcs_separated_property_listings,
-            'properties_info_input_path': gcs_separated_listing_info,
-            'output_path': f"{gcs_all_listings_combined}/combined_listings.json"
+            'properties_info_input_path': gcs_separated_listing_info
         }
     )
 
+    # Move any properties that have been delisted to archive table in the DB
+    archive_delisted_props = PythonOperator(
+        task_id='archive_delisted_properties',
+        python_callable=archive_delisted_properties,
+        op_kwargs={
+            'gcs_bucket': gcs_bucket,
+            'properties_input_path': gcs_separated_property_listings
+        }
+    )
 
 [AV_listings, omada_listings, royal_park_listings] >> listing_tasks_complete \
->> [brochure_information, osm_data, zoning_data] >> combine_and_format_listings
+>> [osm_data, zoning_data] >> combine_and_format_listings >> archive_delisted_props

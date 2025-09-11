@@ -29,6 +29,7 @@ def aggregate_rental_rates(gcs_bucket, input_path, center_lat, center_lon, grid_
         avg_rental_rate = Column(Float)
         num_properties = Column(Integer)
         standard_deviation = Column(Float)
+        bedrooms = Column(Integer)
         
         def __repr__(self):
             return f"<AvgRentalRate(avg_rental_rate={self.avg_rental_rate}, num_properties={self.num_properties}, standard_deviation={self.standard_deviation})>"
@@ -113,30 +114,30 @@ def aggregate_rental_rates(gcs_bucket, input_path, center_lat, center_lon, grid_
     print(f"Created grid with {len(grid_gdf)} cells")
     
 
-    # Find all rental listings that fall within each grid cell and average them
+    # Find all rental listings that fall within each grid cell and average them by number of bedrooms
     grid_rent_mapping = {}
-    
+
     for idx, cell in grid_gdf.iterrows():
-        rents_in_cell = rentals_gdf[rentals_gdf.within(cell.geometry)]['rental_rate']
-        
-        if not rents_in_cell.empty:
-            # Make sure rental_rate is numeric
-            rents_in_cell = pd.to_numeric(rents_in_cell, errors='coerce')
-            rents_in_cell = rents_in_cell.dropna()
-            
-            if not rents_in_cell.empty:
-                avg_rent = rents_in_cell.mean()
-                num_properties = len(rents_in_cell)
-                std_dev = rents_in_cell.std() if len(rents_in_cell) > 1 else 0
-                
-                grid_rent_mapping[idx] = {
-                    "grid_coordinates": str(list(cell.geometry.exterior.coords)),
-                    "avg_rental_rate": float(avg_rent),
-                    "num_properties": int(num_properties),
-                    "standard_deviation": float(std_dev) if not pd.isna(std_dev) else 0.0
-                }
-    
-    print(f"Found {len(grid_rent_mapping)} grid cells with rental properties")
+        listings_in_cell = rentals_gdf[rentals_gdf.within(cell.geometry)]
+        if not listings_in_cell.empty:
+            # Group by number of bedrooms
+            for bedrooms, group in listings_in_cell.groupby('bedrooms'):
+                rents_in_group = pd.to_numeric(group['rental_rate'], errors='coerce').dropna()
+                if not rents_in_group.empty:
+                    avg_rent = rents_in_group.mean()
+                    num_properties = len(rents_in_group)
+                    std_dev = rents_in_group.std() if len(rents_in_group) > 1 else 0
+
+                    # Use a tuple (cell idx, bedrooms) as the key
+                    grid_rent_mapping[(idx, bedrooms)] = {
+                        "grid_coordinates": str(list(cell.geometry.exterior.coords)),
+                        "bedrooms": int(bedrooms),
+                        "avg_rental_rate": float(avg_rent),
+                        "num_properties": int(num_properties),
+                        "standard_deviation": float(std_dev) if not pd.isna(std_dev) else 0.0
+                    }
+
+    print(f"Found {len(grid_rent_mapping)} grid cell/bedroom combinations with rental properties")
 
     try:
         # Create database engine
@@ -150,13 +151,14 @@ def aggregate_rental_rates(gcs_bucket, input_path, center_lat, center_lon, grid_
         
         # Convert the data to a list of AvgRentalRate objects
         db_rental_rates = []
-        for idx, rate in grid_rent_mapping.items():
+        for (idx, bedrooms), rate in grid_rent_mapping.items():
             db_rental_rates.append(
                 AvgRentalRate(
                     avg_rental_rate=rate.get('avg_rental_rate'),
                     grid_coordinates=rate.get('grid_coordinates'),
                     num_properties=rate.get('num_properties'),
                     standard_deviation=rate.get('standard_deviation'),
+                    bedrooms=rate.get('bedrooms')
                 )
             )
         
@@ -174,6 +176,6 @@ def aggregate_rental_rates(gcs_bucket, input_path, center_lat, center_lon, grid_
         if 'session' in locals():
             session.close()
     
-    return f"gs://{gcs_bucket}/aggregated_rental_rates/aggregated_rental_rates.json"
-    
+    return
+
 

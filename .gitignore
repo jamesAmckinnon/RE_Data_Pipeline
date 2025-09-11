@@ -1,5 +1,8 @@
 configs/
+config/
 data/
+logs/
+plugins/
 map.html
 configs/.env
 
@@ -9,11 +12,10 @@ code/data_processing/
 code/data_retrieval/
 code/map/
 code/utils/
+code/venv/
 code/airflow_dock/data/
+code/airflow_dock/dags/
 code/airflow_dock/logs/
 code/airflow_dock/plugins/
 code/airflow_dock/venv/
-code/airflow_dock/docker-compose.yaml/
-code/information_extraction/test_pdfs/
-code/information_extraction/financial_statements copy.ipynb
-code/information_extraction/financial_statements.ipynb
+code/information_extraction/

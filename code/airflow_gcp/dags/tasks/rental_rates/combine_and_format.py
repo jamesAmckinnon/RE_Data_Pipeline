@@ -4,7 +4,10 @@ def combine_and_format(gcs_bucket, input_path, output_path):
     import pandas as pd
     from sqlalchemy import create_engine, Column, Integer, Float, String, DateTime
     from sqlalchemy.ext.declarative import declarative_base
+    from sqlalchemy.dialects.postgresql import insert
+    from sqlalchemy.schema import UniqueConstraint
     from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.sql import func
     import datetime
     from airflow.hooks.base import BaseHook
     from google.cloud import storage
@@ -35,8 +38,13 @@ def combine_and_format(gcs_bucket, input_path, output_path):
         longitude = Column(Float)
         bedrooms = Column(Integer)
         bathrooms = Column(Integer)
-        size = Column(Integer)
+        size = Column(String)
+        created_at = Column(DateTime(timezone=True), server_default=func.now())
         
+        __table_args__ = (
+            UniqueConstraint('building_name', 'address', 'rental_rate', 'bedrooms', 'bathrooms', 'size', name='uq_rental_rates'),
+        )
+
         def __repr__(self):
             return f"<RentalRate(id={self.uuid}, rental_rate=${self.rental_rate}, size={self.size})>"
 
@@ -85,45 +93,42 @@ def combine_and_format(gcs_bucket, input_path, output_path):
         Session = sessionmaker(bind=engine)
         session = Session()
         
+        # Get the current UTC time once for all records
+        now = datetime.datetime.now(datetime.timezone.utc)
+        
         # Convert the data to a list of RentalRate objects
         db_rental_rates = []
         for rate in all_rental_rates:
-            exists = session.query(RentalRate).filter_by(
-                building_name=rate.get('building_name', ''),
-                rental_rate=rate.get('rental_rate', ''),
-                building_type=rate.get('building_type', ''),
-                address=rate.get('address', ''),
-                city=rate.get('city', ''),
-                province=rate.get('province', ''),
-                latitude=rate.get('latitude', 0.0),
-                longitude=rate.get('longitude', 0.0),
-                bedrooms=rate.get('bedrooms', 0),
-                bathrooms=rate.get('bathrooms', 0.0),
-                size=rate.get('size', 'unknown'),
-            ).first()
+            try:
+                db_rental_rates.append({
+                    "uuid": str(rate.get('uuid', '')),
+                    "building_name": str(rate.get('building_name', '')),
+                    "rental_rate": str(rate.get('rental_rate', '')),
+                    "building_type": str(rate.get('building_type', '')),
+                    "address": str(rate.get('address', '')),
+                    "city": str(rate.get('city', '')),
+                    "province": str(rate.get('province', '')),
+                    "latitude": float(rate.get('latitude', 0.0)),
+                    "longitude": float(rate.get('longitude', 0.0)),
+                    "bedrooms": int(rate.get('bedrooms', 0)),
+                    "bathrooms": int(rate.get('bathrooms', 0)),
+                    "size": str(rate.get('size', 'unknown')),
+                    "created_at": now,
+                })
+            except Exception as e:
+                print(f"Error processing rate record: {rate}. Error: {e}")
+                continue
+            
+        stmt = insert(RentalRate).values(db_rental_rates)
+        stmt = stmt.on_conflict_do_nothing(
+            index_elements=['building_name', 'address', 'rental_rate', 'bedrooms', 'bathrooms', 'size']
+        )
 
-            if not exists:
-                db_rental_rates.append(
-                    RentalRate(
-                        uuid=rate.get('uuid', ''),
-                        building_name=rate.get('building_name', ''),
-                        rental_rate=rate.get('rental_rate', ''),
-                        building_type=rate.get('building_type', ''),
-                        address=rate.get('address', ''),
-                        city=rate.get('city', ''),
-                        province=rate.get('province', ''),
-                        latitude=rate.get('latitude', 0.0),
-                        longitude=rate.get('longitude', 0.0),
-                        bedrooms=rate.get('bedrooms', 0),
-                        bathrooms=rate.get('bathrooms', 0.0),
-                        size=rate.get('size', 'unknown'),
-                    )
-                )
-        
-        # Add all rental rates to the database
-        session.add_all(db_rental_rates)
+        result = session.execute(stmt)
+        inserted_count = result.rowcount
         session.commit()
-        print(f"Successfully saved {len(db_rental_rates)} rental rates to the database")
+
+        print(f"Successfully saved {inserted_count} rental rates to the database")
     
     except Exception as e:
         if 'session' in locals():

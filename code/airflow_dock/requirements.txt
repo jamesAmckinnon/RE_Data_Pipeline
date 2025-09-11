@@ -14,3 +14,11 @@ selenium
 webdriver-manager
 lxml
 beautifulsoup4
+pinecone
+langchain
+streamlit
+ollama
+youtube-transcript-api
+langchain-openai
+langchain-pinecone
+langchain-core

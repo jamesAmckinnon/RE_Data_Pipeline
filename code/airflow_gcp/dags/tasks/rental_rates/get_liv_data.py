@@ -154,8 +154,6 @@ def get_liv_data(gcs_bucket, gcs_path):
       """
     }
 
-    # print current working dir path
-    print(f"Current working directory: {os.getcwd()}")
 
 
     # Make the API request to scrape data

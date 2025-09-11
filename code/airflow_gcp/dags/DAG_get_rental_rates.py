@@ -9,6 +9,8 @@ from tasks.rental_rates.get_liv_data import get_liv_data
 from tasks.rental_rates.combine_and_format import combine_and_format
 from tasks.rental_rates.aggregate_rental_rates import aggregate_rental_rates
 
+from tasks.general_tasks.delete_temp_GCS_buckets import delete_temp_GCS_buckets
+
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
 from airflow.providers.google.cloud.operators.gcs import GCSDeleteObjectsOperator
 
@@ -60,7 +62,7 @@ with DAG(
     )
 
     # Combine and format the rental rates
-    combine_and_format = PythonOperator(
+    combine_and_format_task = PythonOperator(
         task_id='combine_and_format',
         python_callable=combine_and_format,
         op_kwargs={
@@ -71,7 +73,7 @@ with DAG(
     )
 
     # Aggregate the rental rates. Gets the average rental rate for each cell in a grid
-    aggregate_rental_rates = PythonOperator(
+    aggregate_rental_rates_task = PythonOperator(
         task_id='aggregate_rental_rates',
         python_callable=aggregate_rental_rates,
             op_kwargs={
@@ -83,5 +85,15 @@ with DAG(
             "cell_size": 500
         }
     )
+    
 
-[liv_data] >> rental_rate_tasks_complete >> combine_and_format >> aggregate_rental_rates
+    delete_temp_GCS_buckets_task = PythonOperator(
+        task_id='delete_temp_GCS_buckets',
+        python_callable=delete_temp_GCS_buckets,
+        op_kwargs={'bucket_names': [
+            f"{gcs_separated_rental_rates}/liv_rental_rates.json", 
+            f"{gcs_combined_rental_rates}/combined_rental_rates.json"
+        ]} 
+    )
+
+[liv_data] >> rental_rate_tasks_complete >> combine_and_format_task >> aggregate_rental_rates_task >> delete_temp_GCS_buckets_task

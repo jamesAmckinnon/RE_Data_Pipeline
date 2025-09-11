@@ -1,6 +1,7 @@
-def get_brochure_info(gcs_bucket, input_path, output_path):
+def get_brochure_info(city_name, gcs_bucket, input_path, output_path):
     import os
     import re
+    import io
     import json
     import pandas as pd
     import requests
@@ -10,9 +11,15 @@ def get_brochure_info(gcs_bucket, input_path, output_path):
     from google.cloud import storage
 
 
+    env = os.getenv("ENV")
     storage_client = storage.Client()
-    # Configs stored in Google VM instance
-    config_dir = Path("/home/jamesamckinnon1/air_env/configs")
+    testing = False
+
+    if env == "GCP":
+        config_dir = Path("/home/jamesamckinnon1/air_env/configs")
+        load_dotenv(dotenv_path= config_dir / ".env")
+    else:
+        config_dir = Path("/opt/airflow/config")
 
     # Function to download a PDF from a URL
     def download_pdf(url):
@@ -41,24 +48,24 @@ def get_brochure_info(gcs_bucket, input_path, output_path):
         return all_listings_df
 
 
-    def extract_info_from_brochure(client, assistant, openAI_prompt, brochure_pdf):
+    def extract_info_from_brochure(client, assistant, openAI_prompt, brochure_pdf, file_name):
+        # Wrap bytes in a BytesIO and set a filename ending with .pdf
+        brochure_file_obj = io.BytesIO(brochure_pdf)
+        brochure_file_obj.name = file_name  # Required so OpenAI knows it's a PDF
+
         message_file = client.files.create(
-                        file=brochure_pdf, 
-                        purpose="assistants"
-                    )
+            file=brochure_file_obj,
+            purpose="assistants"
+        )
 
-        # Create a new thread to eliminate information sharing between different brochures
-        thread = client.beta.threads.create()
-
+        # Create a new thread
         thread = client.beta.threads.create(
             messages=[
                 {
                     "role": "user",
                     "content": openAI_prompt,
-                    # Attach the file to the message.
                     "attachments": [
-                        {"file_id": message_file.id, 
-                        "tools": [{"type": "file_search"}]}
+                        {"file_id": message_file.id, "tools": [{"type": "file_search"}]}
                     ],
                 }
             ]
@@ -72,20 +79,19 @@ def get_brochure_info(gcs_bucket, input_path, output_path):
         message_content = re.sub(r'```json\n(.*?)```', r'\1', messages[0].content[0].text.value, flags=re.DOTALL)
 
         client.files.delete(message_file.id)
+
         return message_content
 
 
     with open(config_dir / "brochure_info_extraction_prompt.txt", 'r') as f:
         openAI_prompt = f.read()
-        
-    city = 'Edmonton'
 
     #### For testing, using a previously generated OpenAI Output ######
-    sample_output_dir_path = Path("/home/jamesamckinnon1/air_env/data/brochure_info")
-    sample_output_file = sample_output_dir_path / "processed_brochures.json"
+    if testing:
+        sample_output_dir_path = Path("/home/jamesamckinnon1/air_env/data/brochure_info")
+        sample_output_file = sample_output_dir_path / "processed_brochures.json"
     ###################################################################
 
-    load_dotenv(dotenv_path= config_dir / ".env")
     OpenAI.api_key = os.getenv("OPENAI_API_KEY")
 
     all_listings_df = get_all_properties()
@@ -97,7 +103,7 @@ def get_brochure_info(gcs_bucket, input_path, output_path):
     assistant = client.beta.assistants.create(
         name="Real Estate Data Extractor",
         instructions=assistant_instructions,
-        model="gpt-4o-mini-2024-07-18",
+        model="gpt-4o-mini",
         tools=[{"type": "file_search"}]  # Enables file handling
     )
 
@@ -110,7 +116,7 @@ def get_brochure_info(gcs_bucket, input_path, output_path):
     )
 
     # Only keep rows for the specified city
-    all_listings_df = all_listings_df[all_listings_df['city'] == city]
+    all_listings_df = all_listings_df[all_listings_df['city'] == city_name]
     # Only keep rows of all_listings_df if 'bruchure_urls' is not null
     all_listings_df = all_listings_df[all_listings_df['brochure_urls'].notnull()]
 
@@ -136,8 +142,8 @@ def get_brochure_info(gcs_bucket, input_path, output_path):
                     ##                         Information extraction using OpenAI                          ##
                     ##                     ----- Uncomment to run paid API calls -----                      ##
                     ##########################################################################################
-                    # extracted_info = extract_info_from_brochure(client, assistant, openAI_prompt, brochure_pdf)
-                    # processed_brochures_list.append({"uuid": uuid, "pdf": {"file_name": file_name, "content": message_content}})
+                    extracted_info = extract_info_from_brochure(client, assistant, openAI_prompt, brochure_pdf, file_name)
+                    processed_brochures_list.append({"uuid": uuid, "pdf": {"file_name": file_name, "content": extracted_info}})
                     ##########################################################################################
 
             except Exception as e:
@@ -145,8 +151,9 @@ def get_brochure_info(gcs_bucket, input_path, output_path):
     
 
     ###### For testing, using a previously generated OpenAI Output ######
-    with open(sample_output_file, 'r') as f:
-        processed_brochures_list = json.load(f)
+    if testing:
+        with open(sample_output_file, 'r') as f:
+            processed_brochures_list = json.load(f)
     ######################################################################
 
     # Save combined output to GCS

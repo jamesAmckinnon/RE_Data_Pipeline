@@ -1,5 +1,6 @@
 def get_zoning_data(gcs_bucket, input_path, output_path):
     import sys
+    import os
     import pandas as pd
     import json
     import requests
@@ -11,8 +12,13 @@ def get_zoning_data(gcs_bucket, input_path, output_path):
 
 
     # Configs stored in Google VM instance
-    zone_colour_scheme_path = "/home/jamesamckinnon1/air_env/configs/tem_current_colour_scheme.json"
+    env = os.getenv("ENV")
     storage_client = storage.Client()
+
+    if env == "GCP":
+        zone_colour_scheme_path = "/home/jamesamckinnon1/air_env/configs/tem_current_colour_scheme.json"
+    else:
+        zone_colour_scheme_path = "/opt/airflow/config/tem_current_colour_scheme.json"
 
     with open(zone_colour_scheme_path) as f:
         zone_colour_scheme = json.load(f)

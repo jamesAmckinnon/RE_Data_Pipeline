@@ -71,6 +71,7 @@ x-airflow-common:
     # AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
   volumes:
     - ${AIRFLOW_DAGS_PATH}:/opt/airflow/dags
+    - ${AIRFLOW_SECRETS_PATH}:/keys:ro
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
@@ -113,6 +114,12 @@ services:
       airflow-init:
         condition: service_completed_successfully
 
+    environment:
+      <<: *airflow-common-env
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
+    env_file:
+      - .env
+
   airflow-scheduler:
     <<: *airflow-common
     command: scheduler
@@ -127,6 +134,12 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    environment:
+      <<: *airflow-common-env
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
+    env_file:
+      - .env
+
 
   airflow-triggerer:
     <<: *airflow-common
@@ -142,6 +155,11 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    environment:
+      <<: *airflow-common-env
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
+    env_file:
+      - .env
 
   airflow-init:
     <<: *airflow-common
@@ -170,6 +188,7 @@ services:
       _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
       _PIP_ADDITIONAL_REQUIREMENTS: ''
+      AIRFLOW_CONN_SUPABASE_DB_TP_IPV4: postgres://postgres.vdrsnwmgmdurrxsfxqpz:%24Lw-NXz.gc6rqfp@aws-0-ca-central-1.pooler.supabase.com:6543/postgres
     user: "0:0"
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}:/sources
