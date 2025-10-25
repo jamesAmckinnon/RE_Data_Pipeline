@@ -24,3 +24,24 @@ docker compose exec airflow-webserver bash
 
 # Free space from build cache
 docker system prune -a --volumes
+
+
+##### Getting dags on gcp ##########
+
+# Navigate to the airflow directory
+cd /opt/airflow
+
+# Clone your repository (replace with your actual repo URL)
+git clone https://github.com/your-username/your-dags-repo.git temp-repo
+
+# Copy your DAGs to the dags directory
+cp -r temp-repo/dags/* ./dags/
+
+# Set proper permissions
+chmod -R 755 ./dags/
+chown -R $USER:$USER ./dags/
+
+# Clean up
+rm -rf temp-repo
+
+####################################
