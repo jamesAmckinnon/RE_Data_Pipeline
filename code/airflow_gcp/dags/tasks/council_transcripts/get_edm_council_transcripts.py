@@ -158,6 +158,7 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
 
     # Collect video URLs
     video_urls = collect_video_urls(driver)
+
     driver.quit()
 
     if not video_urls:
@@ -335,7 +336,7 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
 
     def process_video_batch(video_urls, driver, engine, batch_size=5):
         """Process videos in batches with improved error handling and database operations"""
-        transcripts_for_GCS = []
+        transcripts_temp = []
         all_transcripts_for_GCS = []
         Session = sessionmaker(bind=engine)
         
@@ -381,24 +382,34 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
                     "timestamped_transcript": timestamped_transcript
                 }
 
-                transcripts_for_GCS.append(new_transcript)
-                all_transcripts_for_GCS.append(new_transcript)
+                transcripts_temp.append(new_transcript)
                 
                 # Batch database operations
-                if len(transcripts_for_GCS) >= batch_size or i == len(video_urls) - 1:
+                if len(transcripts_temp) >= batch_size or i == len(video_urls) - 1:
                     try:
                         session = Session()
-                        for transcript_data in transcripts_for_GCS:
+                        db_transcripts = []
+
+                        for transcript_data in transcripts_temp:
                             db_transcript = CouncilTranscript(**transcript_data)
                             session.add(db_transcript)
+                            db_transcripts.append(db_transcript)
+
                         session.commit()
-                        logger.info(f"Successfully saved {len(transcripts_for_GCS)} transcripts to database")
-                        transcripts_for_GCS = []  # Reset for next batch
+                        
+                        # Add IDs to the transcript dicts
+                        for transcript_data, db_transcript in zip(transcripts_temp, db_transcripts):
+                            transcript_data['council_transcript_id'] = db_transcript.council_transcript_id
+
+                        logger.info(f"Successfully saved {len(transcripts_temp)} transcripts to database")
+                        all_transcripts_for_GCS.extend(transcripts_temp)
+
+                        transcripts_temp = []  # Reset for next batch
                     except Exception as db_err:
                         session.rollback()
                         logger.error(f"Database error: {db_err}")
                         # Continue processing other videos
-                    finally:
+                    finally:                        
                         session.close()
                 
                 logger.info(f"Successfully processed: {title_text}")
@@ -412,7 +423,7 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
         return all_transcripts_for_GCS
 
     # Process videos
-    transcripts_for_GCS = process_video_batch(new_video_urls, driver, engine)
+    all_transcripts_for_GCS = process_video_batch(new_video_urls, driver, engine)
     
     # Clean up
     try:
@@ -455,8 +466,8 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
             raise
 
     # Upload to GCS if there are transcripts
-    if transcripts_for_GCS:
-        result_path = upload_to_gcs(transcripts_for_GCS, gcs_bucket, gcs_output_path)
+    if all_transcripts_for_GCS:
+        result_path = upload_to_gcs(all_transcripts_for_GCS, gcs_bucket, gcs_output_path)
     else:
         logger.info("No new transcripts to upload")
         result_path = f"gs://{gcs_bucket}/{gcs_output_path}"

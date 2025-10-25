@@ -42,7 +42,6 @@ def archive_delisted_properties(gcs_bucket, properties_input_path):
         nearby_amenities = Column(String)
         zoning = Column(String)
         zoning_description = Column(String)
-        zone_colour = Column(String)
         zone_geometry = Column(String)
         brochure_name = Column(String)
         extracted_brochure_info = Column(String)
@@ -73,7 +72,6 @@ def archive_delisted_properties(gcs_bucket, properties_input_path):
         nearby_amenities = Column(String)
         zoning = Column(String)
         zoning_description = Column(String)
-        zone_colour = Column(String)
         zone_geometry = Column(String)
         brochure_name = Column(String)
         extracted_brochure_info = Column(String)
@@ -97,10 +95,6 @@ def archive_delisted_properties(gcs_bucket, properties_input_path):
         for p in all_listings
         if p.get('latitude') is not None and p.get('longitude') is not None and p.get('address')
     }
-
-    # first_item = list(current_keys)[0]
-    # print(f"Removing {first_item[2]} from scraped properties")
-    # current_keys.remove(first_item)
 
     engine = get_db_engine()
     Base.metadata.create_all(engine)

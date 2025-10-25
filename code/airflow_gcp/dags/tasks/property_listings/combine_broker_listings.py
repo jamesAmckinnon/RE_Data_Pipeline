@@ -46,7 +46,6 @@ def combine_broker_listings(gcs_bucket, properties_input_path, properties_info_i
         nearby_amenities = Column(String)
         zoning = Column(String)
         zoning_description = Column(String)
-        zone_colour = Column(String)
         zone_geometry = Column(String)
         brochure_name = Column(String)
         extracted_brochure_info = Column(String)
@@ -152,7 +151,6 @@ def combine_broker_listings(gcs_bucket, properties_input_path, properties_info_i
                     if "zone" in prop:
                         all_listings_df.loc[mask, "zoning"] = prop["zone"]["zoning"]
                         all_listings_df.loc[mask, "zoning_description"] = prop["zone"]["description"]
-                        all_listings_df.loc[mask, "zone_colour"]   = prop["zone"]["zone_colour"]
                         all_listings_df.loc[mask, "zone_geometry"] = prop["zone"]["geometry"]
         
         else:
@@ -215,7 +213,6 @@ def combine_broker_listings(gcs_bucket, properties_input_path, properties_info_i
                 "nearby_amenities": safe_cast(prop.get('nearby_amenities'), str, 'Unknown'),
                 "zoning": safe_cast(prop.get('zoning'), str, 'Unknown'),
                 "zoning_description": safe_cast(prop.get('zoning_description'), str, 'Unknown'),
-                "zone_colour": safe_cast(prop.get('zone_colour'), str, 'Unknown'),
                 "zone_geometry": safe_cast(prop.get('zone_geometry'), str, 'Unknown'),
                 "brochure_name": safe_cast(prop.get('brochure_name'), str, 'Unknown'),
                 "extracted_brochure_info": safe_cast(prop.get('extracted_brochure_info'), str, 'Unknown'),

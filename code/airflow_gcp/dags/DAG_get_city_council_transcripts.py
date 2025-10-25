@@ -28,23 +28,23 @@ with DAG(
     catchup=False
 ) as dag:
     
-    # edmonton_transcripts = PythonOperator(
-    #     task_id='get_edm_council_transcripts',
-    #     python_callable=get_edm_council_transcripts,
-    #     op_kwargs={
-    #         'gcs_bucket': gcs_bucket,
-    #         'gcs_output_path': f"{gcs_edm_council_transcripts}/edm_council_transcripts.json"
-    #     }
-    # )
+    edmonton_transcripts = PythonOperator(
+        task_id='get_edm_council_transcripts',
+        python_callable=get_edm_council_transcripts,
+        op_kwargs={
+            'gcs_bucket': gcs_bucket,
+            'gcs_output_path': f"{gcs_edm_council_transcripts}/edm_council_transcripts.json"
+        }
+    )
 
-    # update_vector_db = PythonOperator(
-    #     task_id='transcripts_to_vector_db',
-    #     python_callable=transcripts_to_vector_db,
-    #     op_kwargs={
-    #         'gcs_bucket': gcs_bucket,
-    #         'gcs_input_path': gcs_edm_council_transcripts
-    #     }
-    # )
+    update_vector_db = PythonOperator(
+        task_id='transcripts_to_vector_db',
+        python_callable=transcripts_to_vector_db,
+        op_kwargs={
+            'gcs_bucket': gcs_bucket,
+            'gcs_input_path': gcs_edm_council_transcripts
+        }
+    )
 
     summarize_meetings = PythonOperator(
         task_id='transcript_vectors_to_summaries',
@@ -55,5 +55,5 @@ with DAG(
         }
     )
 
-# edmonton_transcripts >> update_vector_db >> summarize_meetings
-summarize_meetings
+edmonton_transcripts >> update_vector_db >> summarize_meetings
+# summarize_meetings

@@ -2,6 +2,7 @@ def transcript_vectors_to_summaries():
     import os
     import re
     import random
+    import json
     from datetime import datetime, timedelta, timezone
     from dotenv import load_dotenv
     from pathlib import Path
@@ -9,10 +10,12 @@ def transcript_vectors_to_summaries():
     from sqlalchemy import create_engine, Column, Integer, Text, Date, DateTime
     from sqlalchemy.ext.declarative import declarative_base
     from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.dialects.postgresql import JSONB
     from pinecone import Pinecone
     from langchain_openai import ChatOpenAI, OpenAIEmbeddings
     from langchain_pinecone import PineconeVectorStore
     from langchain.chains import load_summarize_chain
+    from langchain.chains import LLMChain
     from langchain.docstore.document import Document
     from langchain.prompts import PromptTemplate
 
@@ -53,6 +56,8 @@ def transcript_vectors_to_summaries():
         date = Column(Date)
         start_time = Column(DateTime(timezone=True))
         meeting_type = Column(Text)
+        topics = Column(JSONB) 
+        tags = Column(JSONB) 
         video_url = Column(Text)
         created_at = Column(DateTime(timezone=True), server_default="now()")
 
@@ -62,11 +67,11 @@ def transcript_vectors_to_summaries():
     session = Session()
 
     # ---------- Get transcripts ----------
-    one_months_ago = (datetime.now(timezone.utc) - timedelta(days=90))
+    three_months_ago = (datetime.now(timezone.utc) - timedelta(days=90))
     transcripts = (
         session.query(CouncilTranscript)
         .filter(
-            CouncilTranscript.date >= one_months_ago,
+            CouncilTranscript.date >= three_months_ago,
             CouncilTranscript.summarized == 0
         )
         .all()
@@ -135,18 +140,6 @@ def transcript_vectors_to_summaries():
             docs_with_sources.append(Document(page_content=text_with_source, metadata=d.metadata))
 
 
-        # map_prompt = PromptTemplate(
-        #     template=(
-        #         "Summarize the following city council transcript excerpt, focusing ONLY on topics that"
-        #         "could be relevant to the commercial real estate industry (zoning, property bylaws,"
-        #         "property tax issues, general discussion about real estate or topics relevant to real estate"
-        #         "investors, brokers or developers etc.). When stating factual information from the transcript"
-        #         "excerpt, include the provided source link in parentheses for attribution.\n\n{text}\n\nSummary:"
-        #     ),
-        #     input_variables=["text"],
-        # )
-
-
         combine_prompt = PromptTemplate(
             template=(
                 "Combine the following city council transcript snippets into a single coherent markdown report. Extract "
@@ -158,14 +151,13 @@ def transcript_vectors_to_summaries():
                 "for why the change is supported or not supported and only provide basic information about the zones themselves. "
                 "Only use information discussed in the text and do not add any of your own opinions or interpretations of the information. "
                 "IMPORTANT: Include inline hyperlinked source citations (Eg. [[1]](the YouTube Link) at the end of the lines or paragraphs where the snippet's information was used. "
-                "IMPORTANT: It is okay for a report to be short if there is not a lot of relevant information in the transcript. The purpose of the report is to summarize relevant real estate market information only. "
+                "IMPORTANT: It is okay for a report to be short if there is not a lot of relevant information in the transcript. The purpose of the report is to summarize relevant real estate market information only. DO NOT explicitly state the fact that the information you are looking for was not discussed, only summarize information that was discussed. "
                 "IMPORTANT: If no relevant information is found in the transcript, output [NONE] as the summary. "
                 "\n\n{text}\n\nFinal Summary:"
             ),
             input_variables=["text"],
         )
 
-        # map_prompt=map_prompt,
         chain = load_summarize_chain(
             llm,
             chain_type="stuff",
@@ -205,6 +197,74 @@ def transcript_vectors_to_summaries():
                 print(f"Error marking transcript as summarized: {e}")
                 session.rollback()
 
+
+        def extract_topics(summary: str, llm):            
+            topic_prompt = PromptTemplate(
+                template=(
+                    "Extract up to 5 key topics from the following city council meeting summary that are relevant to the "
+                    "commercial real estate industry. The topics should be concise phrases or keywords that capture the main "
+                    "themes discussed in the summary. Examples of relevant topics include zoning changes, property tax discussions, "
+                    "bylaw amendments, key motions that could impact the real estate industry, development projects, "
+                    "real estate related legislation or regulation, affordable housing development, capital budgeting, "
+                    "real estate market trends etc. Be specific if possible but brief. Only include topics that are directly supported by the summary text. "
+                    "If no relevant topics are found, return an empty list.\n\n"
+                    "IMPORTANT: Format the topics as JSON. For example: {{\"topics\": [\"Bylaw Amendments\", \"Property Tax Increase\"]}}\n\n"
+                    "Summary: {summary}\n\nRelevant Topics JSON:"
+                ),
+                input_variables=["summary"],
+            )
+            
+            topic_chain = LLMChain(llm=llm, prompt=topic_prompt, verbose=False)
+            
+            topics_response = topic_chain.run(summary=summary)
+            
+            topics_match = re.search(r"\{.*\}", topics_response, re.DOTALL)
+            if topics_match:
+                try:
+                    topics_json = topics_match.group(0)
+                    topics_dict = json.loads(topics_json)
+                    return topics_dict.get("topics", [])  # Extract just the array
+                except json.JSONDecodeError as e:
+                    print(f"Error parsing topics JSON: {e}")
+                    return []
+            else:
+                print("No JSON object found in the topics response.")
+                return []
+
+
+        def extract_tags(summary: str, llm):            
+            tag_prompt = PromptTemplate(
+                template=(
+                    "Extract up to 5 key topic tags from the following city council meeting summary that are relevant to the "
+                    "commercial real estate industry. The tags should be concise 1 to 3 word short phrases or single keywords that capture the main "
+                    "themes discussed in the summary. Examples of relevant topics include zone change, property tax, "
+                    "bylaw amendment, new development, RE legislation, RE regulation, affordable housing, capital budgeting, "
+                    "real estate supply, etc. You can use other tags but just make sure to be brief. Only include tags that are directly supported by the summary text. "
+                    "If no relevant tags are found, return an empty list.\n\n"
+                    "IMPORTANT: Format the tags as JSON and capitalize words. For example: {{\"tags\": [\"Property Tax\", \"Rezoning\"]}}\n\n"
+                    "Summary: {summary}\n\nRelevant tags JSON:"
+                ),
+                input_variables=["summary"],
+            )
+            
+            tag_chain = LLMChain(llm=llm, prompt=tag_prompt, verbose=False)
+            
+            tags_response = tag_chain.run(summary=summary)
+            
+            tags_match = re.search(r"\{.*\}", tags_response, re.DOTALL)
+            if tags_match:
+                try:
+                    tags_json = tags_match.group(0)
+                    tags_dict = json.loads(tags_json)
+                    return tags_dict.get("tags", [])  # Extract just the array
+                except json.JSONDecodeError as e:
+                    print(f"Error parsing tags JSON: {e}")
+                    return []
+            else:
+                print("No JSON object found in the tags response.")
+                return []
+
+
         # After creating summary
         summary = chain.run(docs_with_sources)
         if "[NONE]" in summary:
@@ -214,6 +274,12 @@ def transcript_vectors_to_summaries():
         else:
             summary = replace_sources_with_timestamps(summary)
 
+
+        # Extract topics from summaries
+        extracted_topics = extract_topics(summary, llm)
+        extracted_tags = extract_tags(summary, llm)
+
+
         # Save to DB
         new_summary = CouncilTranscriptSummary(
             council_transcript_id=transcript.council_transcript_id,
@@ -221,7 +287,9 @@ def transcript_vectors_to_summaries():
             date = transcript.date,
             start_time = transcript.start_time,
             meeting_type = transcript.meeting_type,
-            video_url = transcript.video_url
+            video_url = transcript.video_url,
+            topics = extracted_topics,
+            tags = extracted_tags
         )
 
         session.add(new_summary)

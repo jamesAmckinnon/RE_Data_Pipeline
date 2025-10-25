@@ -1,36 +1,36 @@
 def get_zoning_data(gcs_bucket, input_path, output_path):
-    import sys
     import os
     import pandas as pd
     import json
-    import requests
+    from sodapy import Socrata
+    from dotenv import load_dotenv
     from pathlib import Path
     import geopandas as gpd
-    from shapely.geometry import shape, Point, Polygon
+    from shapely.geometry import shape, Point
     from google.cloud import storage
-    import io
 
 
     # Configs stored in Google VM instance
-    env = os.getenv("ENV")
     storage_client = storage.Client()
+    # Configs stored in Google VM instance
+    config_dir = Path("/home/jamesamckinnon1/air_env/configs")
 
-    if env == "GCP":
-        zone_colour_scheme_path = "/home/jamesamckinnon1/air_env/configs/tem_current_colour_scheme.json"
-    else:
-        zone_colour_scheme_path = "/opt/airflow/config/tem_current_colour_scheme.json"
+    load_dotenv(dotenv_path= config_dir / ".env")
+    coe_username = os.getenv("COE_USERNAME")
+    coe_password = os.getenv("COE_PASSWORD")
 
-    with open(zone_colour_scheme_path) as f:
-        zone_colour_scheme = json.load(f)
+    coe_client = Socrata("data.edmonton.ca",
+                    "Op33anp9RGDX6ywsjFuVs8THM",
+                    username=coe_username,
+                    password=coe_password)
 
-    # Get the city zoning data from GCS
-    misc_data_bucket = storage_client.bucket("misc-re-data")
-    zones_blob = misc_data_bucket.blob('data/zoning_data/zoning_geo_data.csv')
-    zones_bytes = zones_blob.download_as_bytes()
 
-    zones_df = pd.read_csv( io.BytesIO(zones_bytes) )
+    zones_info = [row for row in coe_client.get_all("fixa-tstc")]
+    zones_df = pd.DataFrame.from_records(zones_info)
+    zones_df = zones_df[['zoning', 'description', 'date_ext', 'geometry_multipolygon']]
+
     zones_df.dropna(subset=['zoning'], inplace=True)
-    zones_df['geometry'] = zones_df['geometry_multipolygon'].apply(lambda x: shape(eval(x)))
+    zones_df['geometry'] = zones_df['geometry_multipolygon'].apply(lambda x: shape(x))
     zones_gdf = gpd.GeoDataFrame(zones_df, geometry='geometry', crs="EPSG:4326")
 
     # Get all properties from GCS
@@ -72,7 +72,6 @@ def get_zoning_data(gcs_bucket, input_path, output_path):
         if not pd.isna(row['zoning']):
             property_dict["zone"] = {
                 "zoning": row['zoning'],
-                "zone_colour": zone_colour_scheme[row['zoning']],
                 "description": row['description'],
                 "geometry": row['geometry_multipolygon'],
             }

@@ -54,41 +54,66 @@ def get_edm_zoning_bylaw_data():
         # Remove number prefixes like "2." from "2. Permitted Uses"
         return re.sub(r"^\d+\.\s*", "", span_text).strip()
 
-    def parse_zone_purpose(accordion):
+    def parse_zone_purpose(accordion, zone_name):
         content_div = accordion.find("div", class_="node__content")
-        if content_div:
-            text = content_div.get_text(strip=True, separator=" ")
-            t = text.strip()
-            
-            # Case 1: "up to X or Y storeys" (e.g., "up to 3 or 4 Storeys")
-            match = re.search(r'up\s*to\s*(\d+)\s*or\s*(\d+)\s*storeys?', t, re.IGNORECASE)
-            if match:
-                return text, f"up to {match.group(1)} or {match.group(2)}"
-                
-            # Case 2: "up to X storeys" (e.g., "up to 3 Storeys")
-            match = re.search(r'up\s*to\s*(\d+)\s*storeys?', t, re.IGNORECASE)
-            if match:
-                return text, f"up to {match.group(1)}"
-                
-            # Case 3: range with "to" (e.g., "4 to 8 Storeys") - must have digits before and after "to"
-            match = re.search(r'(\d+)\s*to\s*(\d+)\s*storeys?', t, re.IGNORECASE)
-            if match:
-                return text, f"{match.group(1)} to {match.group(2)}"
-                
-            # Case 4: alternative with "or" (e.g., "3 or 4 Storeys")
-            match = re.search(r'(\d+)\s*or\s*(\d+)\s*storeys?', t, re.IGNORECASE)
-            if match:
-                return text, f"{match.group(1)} or {match.group(2)}"
-                
-            # Case 4: single number (e.g., "3 Storeys")
-            match = re.search(r'(\d+)\s*storeys?', t, re.IGNORECASE)
-            if match:
-                return text, match.group(1)
-                
-            # No mention of storeys
-            return text, None
-        else:
+        if not content_div:
             return None, None
+
+        # Remove only <p class="text-align-right">
+        for unwanted in content_div.find_all("p", class_="text-align-right"):
+            unwanted.decompose()
+
+        # Extract text
+        text = content_div.get_text(strip=True, separator=" ")
+        text = re.sub(r"\s+", " ", text).strip()
+        t = text
+
+        ######################## TESTING ########################
+        target_test_test = "approximately 9 to 20 Storeys"
+        target_found = False
+        if target_test_test in text or zone_name == "":
+            target_found = True
+            print("Target text identified: ")
+            print(text)
+        #########################################################
+
+
+        # Case 1: "up to X or Y storeys"
+        match = re.search(r"up\s*to\s*(\d+)\s*or\s*(\d+)\s*storeys", t, re.IGNORECASE)
+        if match:
+            if target_found:
+                print(f"Case 1: Up to {match.group(1)} or {match.group(2)}")
+            return text, f"Up to {match.group(1)} or {match.group(2)}"
+
+        # Case 2: "up to X storeys"
+        match = re.search(r"up\s*to\s*(\d+)\s*storeys", t, re.IGNORECASE)
+        if match:
+            if target_found:
+                print(f"Case 2: Up to {match.group(1)}")
+            return text, f"Up to {match.group(1)}"
+
+        # Case 3: "X to Y storeys"
+        match = re.search(r"(\d+)\s*to\s*(\d+)\s*storeys", t, re.IGNORECASE)
+        if match:
+            if target_found:
+                print(f"Case 3: {match.group(1)} to {match.group(2)}")
+            return text, f"{match.group(1)} to {match.group(2)}"
+
+        # Case 4: "X or Y storeys"
+        match = re.search(r"(\d+)\s*or\s*(\d+)\s*storeys", t, re.IGNORECASE)
+        if match:
+            if target_found:
+                print(f"Case 4: {match.group(1)} or {match.group(2)}")
+            return text, f"{match.group(1)} or {match.group(2)}"
+
+        # Case 5: single number
+        match = re.search(r"(\d+)\s*storeys", t, re.IGNORECASE)
+        if match:
+            if target_found:
+                print(f"Case 5: {match.group(1)}")
+            return text, match.group(1)
+
+        return text, None
 
 
     def parse_permitted_uses(accordion):
@@ -273,7 +298,7 @@ def get_edm_zoning_bylaw_data():
             section_key = get_section_key(span.get_text(strip=True))
 
             if section_key == "Purpose":
-                text, num_storeys = parse_zone_purpose(accordion)
+                text, num_storeys = parse_zone_purpose(accordion, zone_name)
                 if text:
                     temp_data["purpose"] = text
                 if num_storeys:
@@ -289,12 +314,13 @@ def get_edm_zoning_bylaw_data():
                     # Inject num_storeys into regulations if it exists
                     if temp_data.get("_num_storeys"):
                         zone_vars["Number of Storeys"] = temp_data["_num_storeys"]
-                        del temp_data["_num_storeys"]
 
                     output_data[zone_code] = {
                         **temp_data,               # purpose & permitted_uses
                         "regulations": zone_vars   # regulations + num_storeys
                     }
+                    
+                temp_data.pop("_num_storeys", None)
             
         return output_data
 
