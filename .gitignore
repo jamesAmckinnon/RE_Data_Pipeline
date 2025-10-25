@@ -3,6 +3,7 @@ config/
 data/
 logs/
 plugins/
+venv/
 map.html
 configs/.env
 
@@ -12,7 +13,6 @@ code/data_processing/
 code/data_retrieval/
 code/map/
 code/utils/
-code/venv/
 code/airflow_dock/data/
 code/airflow_dock/dags/
 code/airflow_dock/logs/
