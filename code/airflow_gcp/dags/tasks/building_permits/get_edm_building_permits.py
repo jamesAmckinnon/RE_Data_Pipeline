@@ -97,6 +97,8 @@ def get_edm_building_permits():
         where=f"issue_date >= '{date_filter}'", 
         order="issue_date DESC")
     ]
+
+    print("Test ", len(buildingPermits), " building permits fetched from EDM Open Data Portal")
     
     try:
         engine = get_db_engine()

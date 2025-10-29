@@ -25,3 +25,12 @@ sudo systemctl restart airflow-scheduler
 # Can check status after restarting
 sudo systemctl status airflow-webserver
 sudo systemctl status airflow-scheduler
+
+
+## Stop docker container
+docker stop $(docker ps -q)
+
+## When there is a problem with airflow hanging at startup
+# get the ip using
+curl ifconfig.me
+# use that in Cloud SQL > airflow-db > edit > connections > add a network
