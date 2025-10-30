@@ -4,6 +4,7 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
     import re
     import traceback
     import json
+    import os
     import requests
     from urllib.parse import urlparse, parse_qs
     from datetime import datetime
@@ -21,6 +22,7 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.common.exceptions import TimeoutException, StaleElementReferenceException, WebDriverException
     from webdriver_manager.chrome import ChromeDriverManager
+    from shutil import which
     import logging
 
 
@@ -54,8 +56,6 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
     # Create SQLAlchemy model for rental_rates
     Base = declarative_base()
 
-    print("Print statement (test)")
-
     class CouncilTranscript(Base):
         __tablename__ = 'council_transcripts'
         
@@ -78,7 +78,18 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
     def create_webdriver():
         """Create and configure webdriver with improved error handling"""
         options = Options()
-        options.binary_location = "/usr/bin/google-chrome" 
+        # Prefer system-installed Chromium in the container to avoid version mismatches
+        candidate_binaries = [
+            "/usr/bin/chromium",
+            "/usr/bin/chromium-browser",
+            "/usr/bin/google-chrome",
+            which("chromium"),
+            which("chromium-browser"),
+            which("google-chrome"),
+        ]
+        binary_path = next((p for p in candidate_binaries if p and os.path.exists(p)), None)
+        if binary_path:
+            options.binary_location = binary_path
         options.add_argument("--headless")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
@@ -95,10 +106,10 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
         options.add_experimental_option('useAutomationExtension', False)
 
         try:
-            driver = webdriver.Chrome(
-                service=Service(ChromeDriverManager().install()),
-                options=options
-            )
+            # Use system chromedriver if available (installed via apt: chromium-driver)
+            chromedriver_path = "/usr/bin/chromedriver"
+            service = Service(chromedriver_path) if os.path.exists(chromedriver_path) else Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=options)
             driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             return driver
         except Exception as e:
