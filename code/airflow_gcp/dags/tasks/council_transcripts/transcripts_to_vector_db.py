@@ -19,7 +19,11 @@ def transcripts_to_vector_db(gcs_bucket, gcs_input_path):
 
 
     config_dir = Path("/home/jamesamckinnon1/air_env/configs")
-    load_dotenv(dotenv_path= config_dir / ".env")
+    running_in_gcp = bool(os.getenv("GOOGLE_CLOUD_PROJECT"))
+    if not running_in_gcp and (config_dir / ".env").exists():
+        load_dotenv(dotenv_path=config_dir / ".env")
+    else:
+        load_dotenv(dotenv_path="/opt/airflow/env.gcp")
 
     PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
