@@ -54,6 +54,8 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
     # Create SQLAlchemy model for rental_rates
     Base = declarative_base()
 
+    print("Print statement (test)")
+
     class CouncilTranscript(Base):
         __tablename__ = 'council_transcripts'
         
@@ -158,8 +160,6 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
 
     # Collect video URLs
     video_urls = collect_video_urls(driver)
-
-    print(f"Collected {len(video_urls)} video URLs (test)")
 
     driver.quit()
 
