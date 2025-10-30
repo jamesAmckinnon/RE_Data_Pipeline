@@ -5,7 +5,23 @@ def transcripts_to_vector_db(gcs_bucket, gcs_input_path):
     from pinecone import Pinecone, ServerlessSpec
     from google.cloud import storage
     from langchain_openai import OpenAIEmbeddings
-    from langchain_pinecone import PineconeVectorStore
+    # Prefer modern integration, but gracefully fall back to legacy import if unavailable
+    try:
+        from langchain_pinecone import PineconeVectorStore as _LCVectorStore
+        def _make_vectorstore(index, embeddings):
+            return _LCVectorStore(index=index, embedding=embeddings)
+    except Exception:
+        try:
+            from langchain.vectorstores import Pinecone as _LegacyPineconeVS
+            def _make_vectorstore(index, embeddings):
+                # Legacy signature expects (index, embedding_function, text_key)
+                return _LegacyPineconeVS(index, embeddings.embed_query, "text")
+        except Exception as import_err:
+            raise ImportError(
+                "Pinecone vector store integration not found. Ensure either 'langchain-pinecone' "
+                "is installed (with PineconeVectorStore) or a compatible 'langchain' version "
+                "providing langchain.vectorstores.Pinecone."
+            ) from import_err
     from langchain_core.documents import Document
     from dotenv import load_dotenv
     from pathlib import Path
@@ -273,7 +289,7 @@ def transcripts_to_vector_db(gcs_bucket, gcs_input_path):
         openai_api_key=OPENAI_API_KEY
     )
 
-    vectorstore = PineconeVectorStore(embedding=embeddings, index=index)
+    vectorstore = _make_vectorstore(index, embeddings)
     
     try:
         # Get non-vectorized transcripts from database
