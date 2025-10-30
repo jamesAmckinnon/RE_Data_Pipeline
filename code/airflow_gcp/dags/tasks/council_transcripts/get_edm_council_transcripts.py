@@ -159,6 +159,8 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
     # Collect video URLs
     video_urls = collect_video_urls(driver)
 
+    print(f"Collected {len(video_urls)} video URLs (test)")
+
     driver.quit()
 
     if not video_urls:
