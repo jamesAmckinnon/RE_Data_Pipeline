@@ -5,23 +5,6 @@ def transcripts_to_vector_db(gcs_bucket, gcs_input_path):
     from pinecone import Pinecone, ServerlessSpec
     from google.cloud import storage
     from langchain_openai import OpenAIEmbeddings
-    # Prefer modern integration, but gracefully fall back to legacy import if unavailable
-    try:
-        from langchain_pinecone import PineconeVectorStore as _LCVectorStore
-        def _make_vectorstore(index, embeddings):
-            return _LCVectorStore(index=index, embedding=embeddings)
-    except Exception:
-        try:
-            from langchain.vectorstores import Pinecone as _LegacyPineconeVS
-            def _make_vectorstore(index, embeddings):
-                # Legacy signature expects (index, embedding_function, text_key)
-                return _LegacyPineconeVS(index, embeddings.embed_query, "text")
-        except Exception as import_err:
-            raise ImportError(
-                "Pinecone vector store integration not found. Ensure either 'langchain-pinecone' "
-                "is installed (with PineconeVectorStore) or a compatible 'langchain' version "
-                "providing langchain.vectorstores.Pinecone."
-            ) from import_err
     from langchain_core.documents import Document
     from dotenv import load_dotenv
     from pathlib import Path
@@ -32,6 +15,7 @@ def transcripts_to_vector_db(gcs_bucket, gcs_input_path):
     from sqlalchemy.dialects.postgresql import JSONB
     from sqlalchemy.ext.declarative import declarative_base
     from sqlalchemy.orm import sessionmaker   
+    from typing import List
 
 
     config_dir = Path("/home/jamesamckinnon1/air_env/configs")
@@ -289,7 +273,42 @@ def transcripts_to_vector_db(gcs_bucket, gcs_input_path):
         openai_api_key=OPENAI_API_KEY
     )
 
-    vectorstore = _make_vectorstore(index, embeddings)
+    class SimplePineconeVectorStore:
+        def __init__(self, index, embedding):
+            self.index = index
+            self.embedding = embedding
+
+        def add_documents(self, documents: List[Document]):
+            vectors = []
+            for doc in documents:
+                values = self.embedding.embed_query(doc.page_content)
+                metadata = dict(doc.metadata) if doc.metadata else {}
+                metadata["text"] = doc.page_content
+                # Stable-ish ID using transcript id and chunk timestamp if available
+                chunk_id = f"{metadata.get('council_transcript_id', 'unknown')}:{metadata.get('chunk_timestamp', int(time.time()*1e6))}"
+                vectors.append({
+                    "id": chunk_id,
+                    "values": values,
+                    "metadata": metadata,
+                })
+            # Upsert in batches
+            batch = 100
+            for i in range(0, len(vectors), batch):
+                self.index.upsert(vectors=vectors[i:i+batch])
+
+        def similarity_search(self, query: str, k: int = 4, filter: dict | None = None) -> List[Document]:
+            # Use an embedding of the query; allow empty query for filter-only searches
+            qvec = self.embedding.embed_query(query or "")
+            res = self.index.query(vector=qvec, top_k=k, filter=filter or {}, include_metadata=True)
+            matches = res.get("matches", []) if isinstance(res, dict) else res.matches
+            docs: List[Document] = []
+            for m in matches:
+                md = m.get("metadata", {}) if isinstance(m, dict) else (m.metadata or {})
+                text = md.get("text", "")
+                docs.append(Document(page_content=text, metadata=md))
+            return docs
+
+    vectorstore = SimplePineconeVectorStore(index=index, embedding=embeddings)
     
     try:
         # Get non-vectorized transcripts from database
