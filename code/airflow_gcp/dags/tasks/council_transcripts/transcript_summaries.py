@@ -14,8 +14,13 @@ def transcript_vectors_to_summaries():
     from sqlalchemy.dialects.postgresql import JSONB
     from pinecone import Pinecone
     from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-    from langchain.docstore.document import Document
     from typing import List
+    
+    # Simple Document class to replace langchain's Document
+    class Document:
+        def __init__(self, page_content: str, metadata: dict = None):
+            self.page_content = page_content
+            self.metadata = metadata or {}
     
     config_dir = Path("/home/jamesamckinnon1/air_env/configs")
     load_dotenv(dotenv_path= config_dir / ".env")
