@@ -9,12 +9,7 @@ def get_AV_listings(city_name, gcs_bucket, gcs_path):
     from google.cloud import storage
     import os
 
-    env = os.getenv("ENV")
-
-    if env == "GCP":
-        output_schema_path = "/home/jamesamckinnon1/air_env/configs/brokerage_listing_schemas.json"
-    else:
-        output_schema_path = "/opt/airflow/config/brokerage_listing_schemas.json"
+    output_schema_path = "/opt/airflow/config/brokerage_listing_schemas.json"
 
     with open(output_schema_path, 'r') as f:
         output_schema =  json.load(f)
