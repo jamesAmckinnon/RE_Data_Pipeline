@@ -1,10 +1,7 @@
 def get_royal_park_listings(gcs_bucket, gcs_path):
-    import sys
-    import os
     import pandas as pd
     import requests
     from bs4 import BeautifulSoup
-    import re
     import json
     from datetime import date
     import uuid
@@ -17,7 +14,6 @@ def get_royal_park_listings(gcs_bucket, gcs_path):
         output_schema =  json.load(f)
 
     valid_schema = True
-
 
     url = "https://royalparkrealty.com/wp-admin/admin-ajax.php?a=27334.06846988934"
     payload = {"action": "getProperties"}

@@ -95,6 +95,8 @@ def aggregate_rental_rates(gcs_bucket, input_path, center_lat, center_lon, grid_
     if rentals_gdf is None or rentals_gdf.empty:
         print("No valid rental data available for processing.")
         return
+
+    print(f"columns in rentals_gdf: {rentals_gdf.columns.tolist()}")
     
     # Convert to UTM coordinates for accurate spatial calculations
     try:
