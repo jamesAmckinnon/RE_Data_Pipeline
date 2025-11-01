@@ -23,7 +23,7 @@ def transcripts_to_vector_db(gcs_bucket, gcs_input_path):
     if not running_in_gcp and (config_dir / ".env").exists():
         load_dotenv(dotenv_path=config_dir / ".env")
     else:
-        load_dotenv(dotenv_path="/opt/airflow/env.gcp")
+        load_dotenv(dotenv_path="env.gcp")
 
     PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

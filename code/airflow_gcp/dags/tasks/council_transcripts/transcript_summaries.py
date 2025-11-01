@@ -13,11 +13,11 @@ def transcript_vectors_to_summaries():
     from sqlalchemy.dialects.postgresql import JSONB
     from pinecone import Pinecone
     from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-    from langchain_pinecone import PineconeVectorStore
     from langchain.chains import load_summarize_chain
     from langchain.chains import LLMChain
     from langchain.docstore.document import Document
     from langchain.prompts import PromptTemplate
+    from typing import List
 
 
     config_dir = Path("/home/jamesamckinnon1/air_env/configs")
@@ -87,7 +87,45 @@ def transcript_vectors_to_summaries():
         model="text-embedding-3-small",
         openai_api_key=OPENAI_API_KEY
     )
-    vectorstore = PineconeVectorStore(embedding=embeddings, index=pc.Index(index_name))
+
+    index = pc.Index(index_name)
+
+    class SimplePineconeVectorStore:
+        def __init__(self, index, embedding):
+            self.index = index
+            self.embedding = embedding
+
+        def add_documents(self, documents: List[Document]):
+            vectors = []
+            for doc in documents:
+                values = self.embedding.embed_query(doc.page_content)
+                metadata = dict(doc.metadata) if doc.metadata else {}
+                metadata["text"] = doc.page_content
+                # Stable-ish ID using transcript id and chunk timestamp if available
+                chunk_id = f"{metadata.get('council_transcript_id', 'unknown')}:{metadata.get('chunk_timestamp', int(time.time()*1e6))}"
+                vectors.append({
+                    "id": chunk_id,
+                    "values": values,
+                    "metadata": metadata,
+                })
+            # Upsert in batches
+            batch = 100
+            for i in range(0, len(vectors), batch):
+                self.index.upsert(vectors=vectors[i:i+batch])
+
+        def similarity_search(self, query: str, k: int = 4, filter: dict | None = None) -> List[Document]:
+            # Use an embedding of the query; allow empty query for filter-only searches
+            qvec = self.embedding.embed_query(query or "")
+            res = self.index.query(vector=qvec, top_k=k, filter=filter or {}, include_metadata=True)
+            matches = res.get("matches", []) if isinstance(res, dict) else res.matches
+            docs: List[Document] = []
+            for m in matches:
+                md = m.get("metadata", {}) if isinstance(m, dict) else (m.metadata or {})
+                text = md.get("text", "")
+                docs.append(Document(page_content=text, metadata=md))
+            return docs
+
+    vectorstore = SimplePineconeVectorStore(index=index, embedding=embeddings)
 
     # ---------- LLM setup ----------
     llm = ChatOpenAI(
