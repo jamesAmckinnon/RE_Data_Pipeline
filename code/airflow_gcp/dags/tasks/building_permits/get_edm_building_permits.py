@@ -115,6 +115,8 @@ def get_edm_building_permits():
     load_dotenv(dotenv_path=config_dir / ".env")
     coe_username = os.getenv("COE_USERNAME")
     coe_password = os.getenv("COE_PASSWORD")
+    print(f"COE_USERNAME: {coe_username}")
+    print(f"COE_PASSWORD: {coe_password}")
     google_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
     
     if not google_api_key:
