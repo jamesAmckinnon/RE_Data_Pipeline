@@ -20,7 +20,7 @@ def get_edm_building_permits():
     import time
     
     # Configs stored in Google VM instance
-    config_dir = Path("/home/jamesamckinnon1/air_env/configs")
+    config_dir = Path("/opt/airflow")
     
     # Get database connection from Airflow connections
     def get_db_engine():
@@ -112,11 +112,9 @@ def get_edm_building_permits():
             return f"<BuildingPermit(id={self.uuid}, work_type=${self.work_type}, description={self.description})>"
     
     # Load environment variables
-    load_dotenv(dotenv_path=config_dir / ".env")
+    load_dotenv(dotenv_path=config_dir / "env.gcp")
     coe_username = os.getenv("COE_USERNAME")
     coe_password = os.getenv("COE_PASSWORD")
-    print(f"COE_USERNAME: {coe_username}")
-    print(f"COE_PASSWORD: {coe_password}")
     google_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
     
     if not google_api_key:
