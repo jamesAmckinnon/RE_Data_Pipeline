@@ -211,9 +211,11 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
 
                 data = json.loads(match.group(1))
 
+                print("Test printy data:  ", data)
                 micro = data.get("microformat", {}).get("playerMicroformatRenderer", {})
                 live = micro.get("liveBroadcastDetails", {})
 
+                print("Test printy micro:  ", micro)
                 title_text = micro.get("title", {}).get("simpleText")
                 print("Test printy:  ", title_text)
                 if not title_text:
