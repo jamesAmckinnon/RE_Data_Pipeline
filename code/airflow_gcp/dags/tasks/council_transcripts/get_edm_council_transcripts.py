@@ -215,6 +215,7 @@ def get_edm_council_transcripts(gcs_bucket, gcs_output_path):
                 live = micro.get("liveBroadcastDetails", {})
 
                 title_text = micro.get("title", {}).get("simpleText")
+                print("Test printy:  ", title_text)
                 if not title_text:
                     raise ValueError("Title not found in video data")
 
